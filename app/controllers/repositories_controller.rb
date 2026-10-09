@@ -1,8 +1,9 @@
 class RepositoriesController < ApplicationController
   include Concerns::Pageable
 
-  # List of repositories banned by Google AdSense
-  GOOGLE_BANNED_REPOS = %w[
+  # List of repositories that Google AdSense or Contabo has requested to remove
+  BANNED_REPOS = %w[
+    CrackerCat/bob-plugin-akl-deepl-free-translate
     RicterZ/nhentai
     mmistakes/staticman
   ]
@@ -19,13 +20,13 @@ class RepositoriesController < ApplicationController
   def show
     @user = User.find_by!(login: params[:user_login])
     @repo = Repository.find_by!(full_name: "#{params[:user_login]}/#{params[:name]}")
-    raise ActiveRecord::RecordNotFound if GOOGLE_BANNED_REPOS.include?(@repo.full_name)
+    raise ActiveRecord::RecordNotFound if BANNED_REPOS.include?(@repo.full_name)
 
     # Workaround for path like *.js or *.css
     request.format = :html
     respond_to(&:html)
   rescue ActiveRecord::RecordNotFound => e
-    raise e if defined?(@repo) && GOOGLE_BANNED_REPOS.include?(@repo.full_name)
+    raise e if defined?(@repo) && BANNED_REPOS.include?(@repo.full_name)
 
     location = check_github_redirection
     raise e if location.blank?
